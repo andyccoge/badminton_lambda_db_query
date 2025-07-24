@@ -1,0 +1,55 @@
+{
+    "httpMethod": "post",
+    "headers": {
+        "Content-Type": "application/json"
+    },
+    "body": {
+        "//":"###body資料在test.py中會轉成json文字後傳送",
+        "//":"###模擬真實發送的body內容",
+
+        "//":"### 撈取資料對象，根據不同值Lambda會呼叫不同的篩選函式",
+        "target":"users",
+
+        "//":"###資料篩選條件，dict鍵值格式，篩選欄位=>篩選條件",
+        "where":{
+            "id":"", 
+            "email": "",
+            "cellphone": "09",
+            "gender": "",
+            "name_keyword": "",
+            "level_over": ""
+        },
+        "data_batch_insert":[
+            {
+            "id": 9,
+            "name": "秦世奇",
+            "name_line": "747",
+            "name_nick": "747",
+            "email": "",
+            "cellphone": "",
+            "gender": 1,
+            "level": 9
+            },
+            {
+                "name": "高紹瑄",
+                "name_line": "Emily Kao",
+                "name_nick": "瑄瑄",
+                "email": "emily22135303@yahoo.com.tw",
+                "cellphone": "0921071026",
+                "gender": 2,
+                "level": 7
+            },
+            {
+                "name": "陳彥安",
+                "name_line": "陳彥安",
+                "name_nick": "安安",
+                "email": "andyccoge@gmail.com",
+                "cellphone": "0937983569",
+                "gender": 1,
+                "level": 9
+            }
+        ],
+
+        "//":""
+    }
+}
