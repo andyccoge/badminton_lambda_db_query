@@ -12,6 +12,9 @@ class DBBase(ABC):
     # 取得
     @abstractmethod
     def get_data(self, where={}):
+        # 添加sql語句到回傳資料(檢查用)
+        # compiled = db_query.compile(compile_kwargs={"literal_binds": True})
+        # rows.append(str(compiled))
         pass
 
     # 刪除
@@ -34,3 +37,17 @@ class DBBase(ABC):
     @abstractmethod
     def deal_where_query(self, db_query, where):
         pass
+
+    # 判斷新資料是否符合新增條件
+    @abstractmethod
+    def check_new_data(self, data):
+        pass
+
+    # 判斷資料格式是否符合資料表要求
+    @abstractmethod
+    def check_data(self, data):
+        pass
+
+    # 依參數組織回傳的錯誤訊息(主要辨別文字[ex:名稱]+錯誤說明)
+    def set_error_msg(self, main_str ,error_msg):
+        return ((main_str+'：') if main_str else '') + error_msg + "; "

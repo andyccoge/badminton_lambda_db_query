@@ -3,7 +3,7 @@ import boto3
 import os
 import requests
 from sqlalchemy import create_engine
-from query import Users
+from query import Users, PlayDate
 
 db_name = 'badminton_db_1'
 
@@ -60,13 +60,26 @@ def lambda_handler(event, context):
                 else:
                     return {"statusCode": 403, "body": f"No this action:{method}"}
             
-            case 'dates':
-                pass
-            
+            case 'play_date':
+                PlayDate_ins = PlayDate.PlayDate(engine, conn)
+                if method=='POST': # 搜尋球員
+                    rows = PlayDate_ins.get_data(where)
+                elif method=='DELETE': # 刪除球員
+                    result = PlayDate_ins.delete_data(where)
+                    rows = {'deleted':result}
+                elif method=='PUT': # 新增or編輯球員
+                    if where: # 有篩選條件，視為編輯會員
+                        rows = PlayDate_ins.update_data(where, data)
+                    else: # 無篩選條件，視為新增會員
+                        rows = PlayDate_ins.insert_data(data)
+                else:
+                    return {"statusCode": 403, "body": f"No this action:{method}"}
+    
             case _:
-                return {"statusCode": 500, "body": f"Wrong data target: {target}"}
+                return {"statusCode": 403, "body": f"Wrong data target: {target}"}
 
         # 回傳 JSON 字串（用於 API 回傳）
         return {"statusCode": 200, "body": json.dumps(rows, ensure_ascii=False)}
     except Exception as e:
+        # raise
         return {"statusCode": 500, "body": f"DB operation error: {str(e)}"}

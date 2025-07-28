@@ -1,10 +1,10 @@
 from query.DBBase import DBBase
-from sqlalchemy import Table, MetaData, select, or_, delete, update, insert
-import re
+from sqlalchemy import Table, MetaData, select, or_, delete, update, insert, desc, func
+from datetime import datetime, timedelta
 
-class Users(DBBase):
-    _table_name = 'users'
-    _main_col = 'name'
+class PlayDate(DBBase):
+    _table_name = 'play_date'
+    _main_col = 'datetime'
 
     def __init__(self, engine, conn):
         self._engine = engine
@@ -14,22 +14,20 @@ class Users(DBBase):
         self._table = Table(self._table_name, metadata, autoload_with=self._engine)
         self._cols = self._table.c
 
-    # 取得人員
+    # 取得打球日
     def get_data(self, where={}):
         # 設定撈取欄位&表
         db_query = select(
-                        self._cols.id, 
-                        self._cols.name, 
-                        self._cols.name_line, 
-                        self._cols.name_nick, 
-                        self._cols.email, 
-                        self._cols.cellphone, 
-                        self._cols.gender, 
-                        self._cols.level
+                        self._cols.id,
+                        self._cols.location,
+                        self._cols.note,
+                        func.date_format(self._cols.datetime, "%Y-%m-%d %H:%i").label("datetime")
                     ).select_from(self._table)
 
         # 設定篩選條件
         db_query = self.deal_where_query(db_query, where)
+        # 設定排序
+        db_query = db_query.order_by(desc(self._cols.datetime))
 
         # 執行sql
         result = self._conn.execute(db_query)
@@ -39,7 +37,7 @@ class Users(DBBase):
 
         return {"data": rows}
 
-    # 刪除人員
+    # 刪除打球日
     def delete_data(self, where={}):
         # 設定刪除表
         db_query = delete(self._table)
@@ -53,7 +51,7 @@ class Users(DBBase):
 
         return result.rowcount
 
-    # 編輯人員
+    # 編輯打球日
     def update_data(self, where, data={}):
         msg = ''
         [error_msg, data] = self.check_data(data)
@@ -74,7 +72,7 @@ class Users(DBBase):
 
         return result.rowcount        
 
-    # 新增人員
+    # 新增打球日
     def insert_data(self, data={}):
         msg = ''
         items = []
@@ -82,10 +80,12 @@ class Users(DBBase):
             for item in data:
                 [error_msg, item] = self.check_new_data(item)
                 if error_msg: msg += self.set_error_msg(item.get(self._main_col, ''), error_msg)
+                item['datetime'] = datetime.strptime(item.get('datetime', ''), "%Y-%m-%d %H:%M")
                 items.append(item)
         else: # 單個新增
             [error_msg, data] = self.check_new_data(data)
             if error_msg: msg += self.set_error_msg(data.get(self._main_col, ''), error_msg)
+            data['datetime'] = datetime.strptime(data.get('datetime', ''), "%Y-%m-%d %H:%M")
             items.append(data)
         
         # 檢查有誤
@@ -112,29 +112,30 @@ class Users(DBBase):
             match key:
                 case 'id':
                     db_query = db_query.where(self._cols.id == value)
-                case 'email':
-                    db_query = db_query.where(self._cols.email.like(f'%{value}%'))
-                case 'cellphone':
-                    db_query = db_query.where(self._cols.cellphone.like(f'%{value}%'))
-                case 'gender':
-                    db_query = db_query.where(self._cols.gender == value)
-                case 'name_keyword':
-                    db_query = db_query.where(
-                        or_(
-                            self._cols.name.like(f'%{value}%'),
-                            self._cols.name_line.like(f'%{value}%'),
-                            self._cols.name_nick.like(f'%{value}%')
-                        )
-                    )
-                case 'level_over':
-                    db_query = db_query.where(self._cols.level >= value)
+                case 'location':
+                    db_query = db_query.where(self._cols.location.like(f'%{value}%'))
+                case 'note':
+                    db_query = db_query.where(self._cols.note.like(f'%{value}%'))
+                case 'datetime_s':
+                    start_time = datetime.fromisoformat(value)
+                    db_query = db_query.where(self._cols.datetime >= start_time)
+                case 'datetime_e':
+                    end_time = datetime.fromisoformat(value)
+                    db_query = db_query.where(self._cols.datetime <= end_time)
+                case 'date_s':
+                    start_time = datetime.fromisoformat(value)
+                    db_query = db_query.where(self._cols.datetime >= start_time)
+                case 'date_e':
+                    # 轉成 datetime，再加一天
+                    end_time = datetime.strptime(value, "%Y-%m-%d") + timedelta(days=1)
+                    db_query = db_query.where(self._cols.datetime < end_time)
         return db_query
 
     def check_new_data(self, data):
         error_msgs = []
         # 新增檢查
-        if 'name' not in data: 
-            error_msgs.append('請設定姓名')
+        if 'datetime' not in data: 
+            error_msgs.append('請設定日期時間')
         
         # 一般檢查
         [error_msg2, data] = self.check_data(data)
@@ -147,19 +148,7 @@ class Users(DBBase):
         if 'created_at' in data: del data['created_at']
         if 'updated_at' in data: del data['updated_at']
 
-        if 'name' in data and not data['name']:
-            error_msgs.append('請設定姓名')
-        if 'email' in data and data['email'] and not self.is_valid_email(data['email']):
-            error_msgs.append('信箱格式有誤')
-        if 'cellphone' in data and data['cellphone'] and not data['cellphone'].isdigit():
-            error_msgs.append('手機號碼只可輸入數字')
-        if 'gender' in data and data['gender'] not in [1,2]:
-            error_msgs.append('性別設定有誤')
-        if 'level' in data and data['level'] < 0:
-            error_msgs.append('等級設定有誤')
+        if 'datetime' in data and not data['datetime']:
+            error_msgs.append('請設定日期時間')
 
         return ['、'.join(error_msgs), data]
-
-    def is_valid_email(self, email):
-        pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-        return re.match(pattern, email) is not None

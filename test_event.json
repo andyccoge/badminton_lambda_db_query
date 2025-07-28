@@ -1,34 +1,52 @@
 {
-    "httpMethod": "post",
+    "httpMethod": "put",
     "headers": {
         "Content-Type": "application/json"
     },
     "body": {
-        "//":"###body資料在test.py中會轉成json文字後傳送",
-        "//":"###模擬真實發送的body內容",
+        "//":"###body資料在test.py中會轉成json文字後傳送，模擬真實發送的body內容",
 
         "//":"### 撈取資料對象，根據不同值Lambda會呼叫不同的篩選函式",
-        "target":"users",
+        "target":"play_date",
 
         "//":"###資料篩選條件，dict鍵值格式，篩選欄位=>篩選條件",
         "where":{
-            "id":"", 
-            "email": "",
-            "cellphone": "09",
-            "gender": "",
-            "name_keyword": "",
-            "level_over": ""
         },
-        "data_batch_insert":[
+
+        "//":"###'常規傳遞資料都寫於此",
+        "data":{},
+        "data_batch_insert_play_date":[
             {
-            "id": 9,
-            "name": "秦世奇",
-            "name_line": "747",
-            "name_nick": "747",
-            "email": "",
-            "cellphone": "",
-            "gender": 1,
-            "level": 9
+                "datetime":"2025-07-29 20:00",
+                "location":"新羽力",
+                "note":"瑄瑄會來、幫昱安慶生"
+            },
+            {
+                "datetime":"2025-07-19 19:00",
+                "location":"雙連國小",
+                "note":"海豹約"
+            },
+            {
+                "datetime":"2025-07-24 20:00",
+                "location":"銘傳國小",
+                "note":"俊偉團"
+            },
+            {
+                "datetime":"2025-08-05 20:00",
+                "location":"新羽力",
+                "note":""
+            }
+        ],
+        "data_batch_insert_users":[
+            {
+                "id": 9,
+                "name": "秦世奇",
+                "name_line": "747",
+                "name_nick": "747",
+                "email": "",
+                "cellphone": "",
+                "gender": 1,
+                "level": 9
             },
             {
                 "name": "高紹瑄",
