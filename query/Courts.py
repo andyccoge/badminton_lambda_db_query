@@ -39,7 +39,10 @@ class Courts(DBBase):
         courts_match = [item for item in rows if item.get('type') == 1]
         courts_prepare = [item for item in rows if item.get('type') == 2]
 
-        return {"data": rows, "courts_match":courts_match, "courts_prepare":courts_prepare}
+        return {
+            "data": rows, "courts_match":courts_match, "courts_prepare":courts_prepare,
+            "court_type": self._court_type
+        }
 
     # 刪除場地
     def delete_data(self, where={}):

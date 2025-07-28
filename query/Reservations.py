@@ -1,10 +1,9 @@
 from query.DBBase import DBBase
 from sqlalchemy import Table, MetaData, select, or_, delete, update, insert
-import re
 
-class Users(DBBase):
-    _table_name = 'users'
-    _main_col = 'name'
+class Reservations(DBBase):
+    _table_name = 'reservations'
+    _main_col = 'user_id'
 
     def __init__(self, engine, conn):
         self._engine = engine
@@ -14,22 +13,34 @@ class Users(DBBase):
         self._table = Table(self._table_name, metadata, autoload_with=self._engine)
         self._cols = self._table.c
 
-    # 取得人員
+        self._users = Table('users', metadata, autoload_with=self._engine)
+
+    # 取得報名紀錄
     def get_data(self, where={}):
         # 設定撈取欄位&表
         db_query = select(
                         self._cols.id,
-                        self._cols.name,
-                        self._cols.name_line,
-                        self._cols.name_nick,
-                        self._cols.email,
-                        self._cols.cellphone,
-                        self._cols.gender,
-                        self._cols.level
-                    ).select_from(self._table)
+                        self._cols.user_id,
+                        self._cols.play_date_id,
+                        self._cols.show_up,
+                        self._cols.leave,
+                        self._cols.paid,
+
+                        self._users.c.name,
+                        self._users.c.name_line,
+                        self._users.c.name_nick,
+                        self._users.c.email,
+                        self._users.c.cellphone,
+                        self._users.c.gender,
+                        self._users.c.level
+                    ).select_from(
+                        self._table.join(self._users, self._users.c.id == self._cols.user_id)
+                    )
 
         # 設定篩選條件
         db_query = self.deal_where_query(db_query, where)
+        # 設定排序
+        db_query = db_query.order_by(self._cols.id)
 
         # 執行sql
         result = self._conn.execute(db_query)
@@ -39,7 +50,7 @@ class Users(DBBase):
 
         return {"data": rows}
 
-    # 刪除人員
+    # 刪除報名紀錄
     def delete_data(self, where={}):
         if where=={}: return 0
 
@@ -55,7 +66,7 @@ class Users(DBBase):
 
         return result.rowcount
 
-    # 編輯人員
+    # 編輯報名紀錄
     def update_data(self, where, data={}):
         msg = ''
         [error_msg, data] = self.check_data(data)
@@ -76,7 +87,7 @@ class Users(DBBase):
 
         return result.rowcount        
 
-    # 新增人員
+    # 新增報名紀錄
     def insert_data(self, data={}):
         msg = ''
         items = []
@@ -114,29 +125,42 @@ class Users(DBBase):
             match key:
                 case 'id':
                     db_query = db_query.where(self._cols.id == value)
+                case 'user_id':
+                    db_query = db_query.where(self._cols.user_id == value)
+                case 'play_date_id':
+                    db_query = db_query.where(self._cols.play_date_id == value)
+                case 'show_up':
+                    db_query = db_query.where(self._cols.show_up == value)
+                case 'leave':
+                    db_query = db_query.where(self._cols.leave == value)
+                case 'paid':
+                    db_query = db_query.where(self._cols.paid == value)
+                # 以下是join球員表的篩選
                 case 'email':
-                    db_query = db_query.where(self._cols.email.like(f'%{value}%'))
+                    db_query = db_query.where(self._users.c.email.like(f'%{value}%'))
                 case 'cellphone':
-                    db_query = db_query.where(self._cols.cellphone.like(f'%{value}%'))
+                    db_query = db_query.where(self._users.c.cellphone.like(f'%{value}%'))
                 case 'gender':
-                    db_query = db_query.where(self._cols.gender == value)
+                    db_query = db_query.where(self._users.c.gender == value)
                 case 'name_keyword':
                     db_query = db_query.where(
                         or_(
-                            self._cols.name.like(f'%{value}%'),
-                            self._cols.name_line.like(f'%{value}%'),
-                            self._cols.name_nick.like(f'%{value}%')
+                            self._users.c.name.like(f'%{value}%'),
+                            self._users.c.name_line.like(f'%{value}%'),
+                            self._users.c.name_nick.like(f'%{value}%')
                         )
                     )
                 case 'level_over':
-                    db_query = db_query.where(self._cols.level >= value)
+                    db_query = db_query.where(self._users.c.level >= value)
         return db_query
 
     def check_new_data(self, data):
         error_msgs = []
         # 新增檢查
-        if 'name' not in data: 
-            error_msgs.append('請設定姓名')
+        if 'user_id' not in data: 
+            error_msgs.append('請設定對應球員')
+        if 'play_date_id' not in data: 
+            error_msgs.append('請設定對應打球日')
         
         # 一般檢查
         [error_msg2, data] = self.check_data(data)
@@ -149,19 +173,9 @@ class Users(DBBase):
         if 'created_at' in data: del data['created_at']
         if 'updated_at' in data: del data['updated_at']
 
-        if 'name' in data and not data['name']:
-            error_msgs.append('請設定姓名')
-        if 'email' in data and data['email'] and not self.is_valid_email(data['email']):
-            error_msgs.append('信箱格式有誤')
-        if 'cellphone' in data and data['cellphone'] and not data['cellphone'].isdigit():
-            error_msgs.append('手機號碼只可輸入數字')
-        if 'gender' in data and data['gender'] not in [1,2]:
-            error_msgs.append('性別設定有誤')
-        if 'level' in data and data['level'] < 0:
-            error_msgs.append('等級設定有誤')
+        if 'user_id' in data and not data['user_id']:
+            error_msgs.append('請設定對應球員')
+        if 'play_date_id' in data and not data['play_date_id']:
+            error_msgs.append('請設定對應打球日')
 
         return ['、'.join(error_msgs), data]
-
-    def is_valid_email(self, email):
-        pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-        return re.match(pattern, email) is not None

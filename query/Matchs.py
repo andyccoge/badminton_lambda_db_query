@@ -1,10 +1,10 @@
 from query.DBBase import DBBase
 from sqlalchemy import Table, MetaData, select, or_, delete, update, insert
-import re
+from query import Users
 
-class Users(DBBase):
-    _table_name = 'users'
-    _main_col = 'name'
+class Matchs(DBBase):
+    _table_name = 'matchs'
+    _main_col = 'id'
 
     def __init__(self, engine, conn):
         self._engine = engine
@@ -14,22 +14,34 @@ class Users(DBBase):
         self._table = Table(self._table_name, metadata, autoload_with=self._engine)
         self._cols = self._table.c
 
-    # 取得人員
+        self._Users_ins = Users.Users(self._engine, self._conn)
+
+    # 取得比賽紀錄
     def get_data(self, where={}):
+        where_user = where.copy()
+        if "id" in where: del where_user['id']
+        user_result = self._Users_ins.get_data(where_user)
+        where['user_ids'] = [item['id'] for item in user_result['data']]
+        user_map = {item["id"]: item for item in user_result['data']}
+
         # 設定撈取欄位&表
         db_query = select(
                         self._cols.id,
-                        self._cols.name,
-                        self._cols.name_line,
-                        self._cols.name_nick,
-                        self._cols.email,
-                        self._cols.cellphone,
-                        self._cols.gender,
-                        self._cols.level
+                        self._cols.user_id_1,
+                        self._cols.user_id_2,
+                        self._cols.user_id_3,
+                        self._cols.user_id_4,
+                        self._cols.play_date_id,
+                        self._cols.court_id,
+                        self._cols.point_12,
+                        self._cols.point_34,
+                        self._cols.duration
                     ).select_from(self._table)
 
         # 設定篩選條件
         db_query = self.deal_where_query(db_query, where)
+        # 設定排序
+        db_query = db_query.order_by(self._cols.id)
 
         # 執行sql
         result = self._conn.execute(db_query)
@@ -37,9 +49,9 @@ class Users(DBBase):
         # 轉成 list of dict
         rows = [dict(row._mapping) for row in result]
 
-        return {"data": rows}
+        return {"data": rows, "user_map": user_map}
 
-    # 刪除人員
+    # 刪除比賽紀錄
     def delete_data(self, where={}):
         if where=={}: return 0
 
@@ -55,7 +67,7 @@ class Users(DBBase):
 
         return result.rowcount
 
-    # 編輯人員
+    # 編輯比賽紀錄
     def update_data(self, where, data={}):
         msg = ''
         [error_msg, data] = self.check_data(data)
@@ -76,7 +88,7 @@ class Users(DBBase):
 
         return result.rowcount        
 
-    # 新增人員
+    # 新增比賽紀錄
     def insert_data(self, data={}):
         msg = ''
         items = []
@@ -114,29 +126,34 @@ class Users(DBBase):
             match key:
                 case 'id':
                     db_query = db_query.where(self._cols.id == value)
-                case 'email':
-                    db_query = db_query.where(self._cols.email.like(f'%{value}%'))
-                case 'cellphone':
-                    db_query = db_query.where(self._cols.cellphone.like(f'%{value}%'))
-                case 'gender':
-                    db_query = db_query.where(self._cols.gender == value)
-                case 'name_keyword':
-                    db_query = db_query.where(
-                        or_(
-                            self._cols.name.like(f'%{value}%'),
-                            self._cols.name_line.like(f'%{value}%'),
-                            self._cols.name_nick.like(f'%{value}%')
-                        )
-                    )
-                case 'level_over':
-                    db_query = db_query.where(self._cols.level >= value)
+                case 'play_date_id':
+                    db_query = db_query.where(self._cols.play_date_id == value)
+                case 'court_id':
+                    db_query = db_query.where(self._cols.court_id == value)
+                case 'duration_s':
+                    db_query = db_query.where(self._cols.duration >= value)
+                case 'duration_e':
+                    db_query = db_query.where(self._cols.duration <= value)
+                case 'user_ids':
+                    value.append(0)
+                    db_query = db_query.where(self._cols.duration.in_(value))
         return db_query
 
     def check_new_data(self, data):
         error_msgs = []
         # 新增檢查
-        if 'name' not in data: 
-            error_msgs.append('請設定姓名')
+        if 'user_id_1' not in data: 
+            error_msgs.append('請設定對應球員')
+        if 'user_id_2' not in data: 
+            error_msgs.append('請設定對應球員')
+        if 'user_id_3' not in data: 
+            error_msgs.append('請設定對應球員')
+        if 'user_id_4' not in data: 
+            error_msgs.append('請設定對應球員')
+        if 'play_date_id' not in data: 
+            error_msgs.append('請設定對應打球日')
+        if 'court_id' not in data: 
+            error_msgs.append('請設定對應場地')
         
         # 一般檢查
         [error_msg2, data] = self.check_data(data)
@@ -149,19 +166,23 @@ class Users(DBBase):
         if 'created_at' in data: del data['created_at']
         if 'updated_at' in data: del data['updated_at']
 
-        if 'name' in data and not data['name']:
-            error_msgs.append('請設定姓名')
-        if 'email' in data and data['email'] and not self.is_valid_email(data['email']):
-            error_msgs.append('信箱格式有誤')
-        if 'cellphone' in data and data['cellphone'] and not data['cellphone'].isdigit():
-            error_msgs.append('手機號碼只可輸入數字')
-        if 'gender' in data and data['gender'] not in [1,2]:
-            error_msgs.append('性別設定有誤')
-        if 'level' in data and data['level'] < 0:
-            error_msgs.append('等級設定有誤')
+        if 'user_id_1' in data and not data['user_id_1']:
+            error_msgs.append('請設定對應球員')
+        if 'user_id_2' in data and not data['user_id_2']:
+            error_msgs.append('請設定對應球員')
+        if 'user_id_3' in data and not data['user_id_3']:
+            error_msgs.append('請設定對應球員')
+        if 'user_id_4' in data and not data['user_id_4']:
+            error_msgs.append('請設定對應球員')
+        if 'play_date_id' in data and not data['play_date_id']:
+            error_msgs.append('請設定對應打球日')
+        if 'court_id' in data and not data['court_id']:
+            error_msgs.append('請設定對應場地')
+        if 'point_12' in data and data['point_12'] < 0:
+            error_msgs.append('分數設定有誤')
+        if 'point_34' in data and data['point_34'] < 0:
+            error_msgs.append('分數設定有誤')
+        if 'duration' in data and data['duration'] < 0:
+            error_msgs.append('比賽時間設定有誤')
 
         return ['、'.join(error_msgs), data]
-
-    def is_valid_email(self, email):
-        pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-        return re.match(pattern, email) is not None

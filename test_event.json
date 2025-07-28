@@ -7,15 +7,19 @@
         "//":"###body資料在test.py中會轉成json文字後傳送，模擬真實發送的body內容",
 
         "//":"### 撈取資料對象，根據不同值Lambda會呼叫不同的篩選函式",
-        "target":"courts",
+        "target":"matchs",
 
         "//":"###資料篩選條件，dict鍵值格式，篩選欄位=>篩選條件",
-        "where":{
-        },
+        "where":{},
 
         "//":"###'常規傳遞資料都寫於此",
         "data":{
-
+            "user_id_1": 26,
+            "user_id_2": 25,
+            "user_id_3": 33,
+            "user_id_4": 34,
+            "court_id": 1,
+            "play_date_id": 1
         },
         "data_batch_insert_play_date":[
             {

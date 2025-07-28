@@ -3,7 +3,7 @@ import boto3
 import os
 import requests
 from sqlalchemy import create_engine
-from query import Users, PlayDate, Courts
+from query import Users, PlayDate, Courts, Reservations, Matchs
 
 db_name = 'badminton_db_1'
 
@@ -90,11 +90,41 @@ def lambda_handler(event, context):
                 else:
                     return {"statusCode": 403, "body": f"No this action:{method}"}
 
+            case 'reservations':
+                Reservations_ins = Reservations.Reservations(engine, conn)
+                if method=='POST': # 搜尋報名紀錄
+                    rows = Reservations_ins.get_data(where)
+                elif method=='DELETE': # 刪除報名紀錄
+                    result = Reservations_ins.delete_data(where)
+                    rows = {'deleted':result}
+                elif method=='PUT': # 新增or編輯報名紀錄
+                    if where: # 有篩選條件，視為編輯報名紀錄
+                        rows = Reservations_ins.update_data(where, data)
+                    else: # 無篩選條件，視為新增報名紀錄
+                        rows = Reservations_ins.insert_data(data)
+                else:
+                    return {"statusCode": 403, "body": f"No this action:{method}"}
+
+            case 'matchs':
+                Matchs_ins = Matchs.Matchs(engine, conn)
+                if method=='POST': # 搜尋比賽紀錄
+                    rows = Matchs_ins.get_data(where)
+                elif method=='DELETE': # 刪除比賽紀錄
+                    result = Matchs_ins.delete_data(where)
+                    rows = {'deleted':result}
+                elif method=='PUT': # 新增or編輯比賽紀錄
+                    if where: # 有篩選條件，視為編輯比賽紀錄
+                        rows = Matchs_ins.update_data(where, data)
+                    else: # 無篩選條件，視為新增比賽紀錄
+                        rows = Matchs_ins.insert_data(data)
+                else:
+                    return {"statusCode": 403, "body": f"No this action:{method}"}
+
             case _:
                 return {"statusCode": 403, "body": f"Wrong data target: {target}"}
 
         # 回傳 JSON 字串（用於 API 回傳）
         return {"statusCode": 200, "body": json.dumps(rows, ensure_ascii=False)}
     except Exception as e:
-        # raise
+        raise
         return {"statusCode": 500, "body": f"DB operation error: {str(e)}"}
