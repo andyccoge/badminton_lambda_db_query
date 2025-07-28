@@ -39,6 +39,8 @@ class PlayDate(DBBase):
 
     # 刪除打球日
     def delete_data(self, where={}):
+        if where=={}: return 0
+
         # 設定刪除表
         db_query = delete(self._table)
 

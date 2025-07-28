@@ -3,7 +3,7 @@ import boto3
 import os
 import requests
 from sqlalchemy import create_engine
-from query import Users, PlayDate
+from query import Users, PlayDate, Courts
 
 db_name = 'badminton_db_1'
 
@@ -53,28 +53,43 @@ def lambda_handler(event, context):
                     result = Users_ins.delete_data(where)
                     rows = {'deleted':result}
                 elif method=='PUT': # 新增or編輯球員
-                    if where: # 有篩選條件，視為編輯會員
+                    if where: # 有篩選條件，視為編輯球員
                         rows = Users_ins.update_data(where, data)
-                    else: # 無篩選條件，視為新增會員
+                    else: # 無篩選條件，視為新增球員
                         rows = Users_ins.insert_data(data)
                 else:
                     return {"statusCode": 403, "body": f"No this action:{method}"}
             
             case 'play_date':
                 PlayDate_ins = PlayDate.PlayDate(engine, conn)
-                if method=='POST': # 搜尋球員
+                if method=='POST': # 搜尋打球日
                     rows = PlayDate_ins.get_data(where)
-                elif method=='DELETE': # 刪除球員
+                elif method=='DELETE': # 刪除打球日
                     result = PlayDate_ins.delete_data(where)
                     rows = {'deleted':result}
-                elif method=='PUT': # 新增or編輯球員
-                    if where: # 有篩選條件，視為編輯會員
+                elif method=='PUT': # 新增or編輯打球日
+                    if where: # 有篩選條件，視為編輯打球日
                         rows = PlayDate_ins.update_data(where, data)
-                    else: # 無篩選條件，視為新增會員
+                    else: # 無篩選條件，視為新增打球日
                         rows = PlayDate_ins.insert_data(data)
                 else:
                     return {"statusCode": 403, "body": f"No this action:{method}"}
-    
+
+            case 'courts':
+                Courts_ins = Courts.Courts(engine, conn)
+                if method=='POST': # 搜尋場地
+                    rows = Courts_ins.get_data(where)
+                elif method=='DELETE': # 刪除場地
+                    result = Courts_ins.delete_data(where)
+                    rows = {'deleted':result}
+                elif method=='PUT': # 新增or編輯場地
+                    if where: # 有篩選條件，視為編輯場地
+                        rows = Courts_ins.update_data(where, data)
+                    else: # 無篩選條件，視為新增場地
+                        rows = Courts_ins.insert_data(data)
+                else:
+                    return {"statusCode": 403, "body": f"No this action:{method}"}
+
             case _:
                 return {"statusCode": 403, "body": f"Wrong data target: {target}"}
 

@@ -1,10 +1,10 @@
 from query.DBBase import DBBase
 from sqlalchemy import Table, MetaData, select, or_, delete, update, insert
-import re
 
-class Users(DBBase):
-    _table_name = 'users'
-    _main_col = 'name'
+class Courts(DBBase):
+    _table_name = 'courts'
+    _main_col = 'code'
+    _court_type = ["", "比賽", "預備"]
 
     def __init__(self, engine, conn):
         self._engine = engine
@@ -14,22 +14,20 @@ class Users(DBBase):
         self._table = Table(self._table_name, metadata, autoload_with=self._engine)
         self._cols = self._table.c
 
-    # 取得人員
+    # 取得場地
     def get_data(self, where={}):
         # 設定撈取欄位&表
         db_query = select(
-                        self._cols.id, 
-                        self._cols.name, 
-                        self._cols.name_line, 
-                        self._cols.name_nick, 
-                        self._cols.email, 
-                        self._cols.cellphone, 
-                        self._cols.gender, 
-                        self._cols.level
+                        self._cols.id,
+                        self._cols.play_date_id,
+                        self._cols.code,
+                        self._cols.type
                     ).select_from(self._table)
 
         # 設定篩選條件
         db_query = self.deal_where_query(db_query, where)
+        # 設定排序
+        db_query = db_query.order_by(self._cols.id)
 
         # 執行sql
         result = self._conn.execute(db_query)
@@ -37,9 +35,13 @@ class Users(DBBase):
         # 轉成 list of dict
         rows = [dict(row._mapping) for row in result]
 
-        return {"data": rows}
+        # 依比賽跟預備把場地分組
+        courts_match = [item for item in rows if item.get('type') == 1]
+        courts_prepare = [item for item in rows if item.get('type') == 2]
 
-    # 刪除人員
+        return {"data": rows, "courts_match":courts_match, "courts_prepare":courts_prepare}
+
+    # 刪除場地
     def delete_data(self, where={}):
         if where=={}: return 0
 
@@ -55,7 +57,7 @@ class Users(DBBase):
 
         return result.rowcount
 
-    # 編輯人員
+    # 編輯場地
     def update_data(self, where, data={}):
         msg = ''
         [error_msg, data] = self.check_data(data)
@@ -76,7 +78,7 @@ class Users(DBBase):
 
         return result.rowcount        
 
-    # 新增人員
+    # 新增場地
     def insert_data(self, data={}):
         msg = ''
         items = []
@@ -114,29 +116,21 @@ class Users(DBBase):
             match key:
                 case 'id':
                     db_query = db_query.where(self._cols.id == value)
-                case 'email':
-                    db_query = db_query.where(self._cols.email.like(f'%{value}%'))
-                case 'cellphone':
-                    db_query = db_query.where(self._cols.cellphone.like(f'%{value}%'))
-                case 'gender':
-                    db_query = db_query.where(self._cols.gender == value)
-                case 'name_keyword':
-                    db_query = db_query.where(
-                        or_(
-                            self._cols.name.like(f'%{value}%'),
-                            self._cols.name_line.like(f'%{value}%'),
-                            self._cols.name_nick.like(f'%{value}%')
-                        )
-                    )
-                case 'level_over':
-                    db_query = db_query.where(self._cols.level >= value)
+                case 'play_date_id':
+                    db_query = db_query.where(self._cols.play_date_id == value)
+                case 'code':
+                    db_query = db_query.where(self._cols.code.like(f'%{value}%'))
+                case 'type':
+                    db_query = db_query.where(self._cols.type == value)
         return db_query
 
     def check_new_data(self, data):
         error_msgs = []
         # 新增檢查
-        if 'name' not in data: 
-            error_msgs.append('請設定姓名')
+        if 'play_date_id' not in data: 
+            error_msgs.append('請設定對應打球日')
+        if 'type' not in data: 
+            error_msgs.append('請設定場地類型')
         
         # 一般檢查
         [error_msg2, data] = self.check_data(data)
@@ -149,19 +143,9 @@ class Users(DBBase):
         if 'created_at' in data: del data['created_at']
         if 'updated_at' in data: del data['updated_at']
 
-        if 'name' in data and not data['name']:
-            error_msgs.append('請設定姓名')
-        if 'email' in data and data['email'] and not self.is_valid_email(data['email']):
-            error_msgs.append('信箱格式有誤')
-        if 'cellphone' in data and data['cellphone'] and not data['cellphone'].isdigit():
-            error_msgs.append('手機號碼只可輸入數字')
-        if 'gender' in data and data['gender'] not in [1,2]:
-            error_msgs.append('性別設定有誤')
-        if 'level' in data and data['level'] < 0:
-            error_msgs.append('等級設定有誤')
+        if 'play_date_id' in data and not data['play_date_id']:
+            error_msgs.append('請設定對應打球日')
+        if 'type' in data and not data['type'] in [1,2]:
+            error_msgs.append('場地類型設定有誤')
 
         return ['、'.join(error_msgs), data]
-
-    def is_valid_email(self, email):
-        pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-        return re.match(pattern, email) is not None
