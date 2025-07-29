@@ -1,9 +1,10 @@
 import json
 import boto3
 import os
-import requests
+# import requests
 from sqlalchemy import create_engine
 from query import Users, PlayDate, Courts, Reservations, Matchs
+from query.derivation import PlayDateData
 
 db_name = 'badminton_db_1'
 
@@ -47,76 +48,73 @@ def lambda_handler(event, context):
         match target:
             case 'users':
                 Users_ins = Users.Users(engine, conn)
-                if method=='POST': # 搜尋球員
-                    rows = Users_ins.get_data(where)
+                if method=='GET': # 搜尋球員
+                    result = Users_ins.get_data(where)
                 elif method=='DELETE': # 刪除球員
                     result = Users_ins.delete_data(where)
-                    rows = {'deleted':result}
-                elif method=='PUT': # 新增or編輯球員
-                    if where: # 有篩選條件，視為編輯球員
-                        rows = Users_ins.update_data(where, data)
-                    else: # 無篩選條件，視為新增球員
-                        rows = Users_ins.insert_data(data)
+                elif method=='POST': # 新增球員
+                    result = Users_ins.insert_data(data)
+                elif method=='PUT': # 編輯球員
+                    result = Users_ins.update_data(where, data)
                 else:
                     return {"statusCode": 403, "body": f"No this action:{method}"}
             
             case 'play_date':
                 PlayDate_ins = PlayDate.PlayDate(engine, conn)
-                if method=='POST': # 搜尋打球日
-                    rows = PlayDate_ins.get_data(where)
+                if method=='GET': # 搜尋打球日
+                    result = PlayDate_ins.get_data(where)
                 elif method=='DELETE': # 刪除打球日
                     result = PlayDate_ins.delete_data(where)
-                    rows = {'deleted':result}
-                elif method=='PUT': # 新增or編輯打球日
-                    if where: # 有篩選條件，視為編輯打球日
-                        rows = PlayDate_ins.update_data(where, data)
-                    else: # 無篩選條件，視為新增打球日
-                        rows = PlayDate_ins.insert_data(data)
+                elif method=='POST': # 新增打球日
+                    result = PlayDate_ins.insert_data(data)
+                elif method=='PUT': # 編輯打球日
+                    result = PlayDate_ins.update_data(where, data)
                 else:
                     return {"statusCode": 403, "body": f"No this action:{method}"}
-
+            
             case 'courts':
                 Courts_ins = Courts.Courts(engine, conn)
-                if method=='POST': # 搜尋場地
-                    rows = Courts_ins.get_data(where)
+                if method=='GET': # 搜尋場地
+                    result = Courts_ins.get_data(where)
                 elif method=='DELETE': # 刪除場地
                     result = Courts_ins.delete_data(where)
-                    rows = {'deleted':result}
-                elif method=='PUT': # 新增or編輯場地
-                    if where: # 有篩選條件，視為編輯場地
-                        rows = Courts_ins.update_data(where, data)
-                    else: # 無篩選條件，視為新增場地
-                        rows = Courts_ins.insert_data(data)
+                elif method=='POST': # 新增場地
+                    result = Courts_ins.insert_data(data)
+                elif method=='PUT': # 編輯場地
+                    result = Courts_ins.update_data(where, data)
                 else:
                     return {"statusCode": 403, "body": f"No this action:{method}"}
 
             case 'reservations':
                 Reservations_ins = Reservations.Reservations(engine, conn)
-                if method=='POST': # 搜尋報名紀錄
-                    rows = Reservations_ins.get_data(where)
+                if method=='GET': # 搜尋報名紀錄
+                    result = Reservations_ins.get_data(where)
                 elif method=='DELETE': # 刪除報名紀錄
                     result = Reservations_ins.delete_data(where)
-                    rows = {'deleted':result}
-                elif method=='PUT': # 新增or編輯報名紀錄
-                    if where: # 有篩選條件，視為編輯報名紀錄
-                        rows = Reservations_ins.update_data(where, data)
-                    else: # 無篩選條件，視為新增報名紀錄
-                        rows = Reservations_ins.insert_data(data)
+                elif method=='POST': # 新增報名紀錄
+                    result = Reservations_ins.insert_data(data)
+                elif method=='PUT': # 編輯報名紀錄
+                    result = Reservations_ins.update_data(where, data)
                 else:
                     return {"statusCode": 403, "body": f"No this action:{method}"}
 
             case 'matchs':
                 Matchs_ins = Matchs.Matchs(engine, conn)
-                if method=='POST': # 搜尋比賽紀錄
-                    rows = Matchs_ins.get_data(where)
+                if method=='GET': # 搜尋比賽紀錄
+                    result = Matchs_ins.get_data(where)
                 elif method=='DELETE': # 刪除比賽紀錄
                     result = Matchs_ins.delete_data(where)
-                    rows = {'deleted':result}
-                elif method=='PUT': # 新增or編輯比賽紀錄
-                    if where: # 有篩選條件，視為編輯比賽紀錄
-                        rows = Matchs_ins.update_data(where, data)
-                    else: # 無篩選條件，視為新增比賽紀錄
-                        rows = Matchs_ins.insert_data(data)
+                elif method=='POST': # 新增比賽紀錄
+                    result = Matchs_ins.insert_data(data)
+                elif method=='PUT': # 編輯比賽紀錄
+                    result = Matchs_ins.update_data(where, data)
+                else:
+                    return {"statusCode": 403, "body": f"No this action:{method}"}
+
+            case 'play_date_data':
+                PlayDateData_ins = PlayDateData.PlayDateData(engine, conn)
+                if method=='GET': # 取得打球日所需的所有資料(含場地、報名紀錄、比賽紀錄、相關人員)
+                    result = PlayDateData_ins.get_data(where)
                 else:
                     return {"statusCode": 403, "body": f"No this action:{method}"}
 
@@ -124,7 +122,7 @@ def lambda_handler(event, context):
                 return {"statusCode": 403, "body": f"Wrong data target: {target}"}
 
         # 回傳 JSON 字串（用於 API 回傳）
-        return {"statusCode": 200, "body": json.dumps(rows, ensure_ascii=False)}
+        return {"statusCode": 200, "body": json.dumps(result, ensure_ascii=False)}
     except Exception as e:
         raise
         return {"statusCode": 500, "body": f"DB operation error: {str(e)}"}

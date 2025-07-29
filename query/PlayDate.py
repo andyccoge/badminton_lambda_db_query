@@ -25,7 +25,7 @@ class PlayDate(DBBase):
                     ).select_from(self._table)
 
         # 設定篩選條件
-        db_query = self.deal_where_query(db_query, where)
+        [db_query, *_] = self.deal_where_query(db_query, where)
         # 設定排序
         db_query = db_query.order_by(desc(self._cols.datetime))
 
@@ -39,19 +39,18 @@ class PlayDate(DBBase):
 
     # 刪除打球日
     def delete_data(self, where={}):
-        if where=={}: return 0
-
         # 設定刪除表
         db_query = delete(self._table)
 
         # 設定篩選條件
-        db_query = self.deal_where_query(db_query, where)
+        [db_query, filtered] = self.deal_where_query(db_query, where)
+        if filtered==0: return {'deleted':0, 'msg':'請設定篩選條件'}
 
         # 執行sql
         result = self._conn.execute(db_query)
         self._conn.commit()
 
-        return result.rowcount
+        return {'deleted':result.rowcount, 'msg':''}
 
     # 編輯打球日
     def update_data(self, where, data={}):
@@ -60,19 +59,19 @@ class PlayDate(DBBase):
         if error_msg: msg += self.set_error_msg(data.get(self._main_col, ''), error_msg)
 
         # 檢查有誤
-        if msg:
-            return {'saved':0, 'msg':msg}
+        if msg: return {'saved':0, 'msg':msg}
         
         db_query = update(self._table)
         db_query = db_query.values(**data)
 
         # 設定篩選條件
-        db_query = self.deal_where_query(db_query, where)
+        [db_query, filtered] = self.deal_where_query(db_query, where)
+        if filtered==0: return {'saved':0, 'msg':'請設定篩選條件'}
 
         result = self._conn.execute(db_query)
         self._conn.commit()
 
-        return result.rowcount        
+        return {'saved':result.rowcount, 'msg':msg}
 
     # 新增打球日
     def insert_data(self, data={}):
@@ -91,8 +90,7 @@ class PlayDate(DBBase):
             items.append(data)
         
         # 檢查有誤
-        if msg:
-            return {'saved':0, 'msg':msg}
+        if msg: return {'saved':0, 'msg':msg}
 
         db_query = insert(self._table)
         result = self._conn.execute(db_query, items)
@@ -108,30 +106,38 @@ class PlayDate(DBBase):
 
 
     def deal_where_query(self, db_query, where):
+        filtered = 0
         for key, value in where.items():
             if value=='' or value is None:
                 continue
             match key:
                 case 'id':
                     db_query = db_query.where(self._cols.id == value)
+                    filtered = 1
                 case 'location':
                     db_query = db_query.where(self._cols.location.like(f'%{value}%'))
+                    filtered = 1
                 case 'note':
                     db_query = db_query.where(self._cols.note.like(f'%{value}%'))
+                    filtered = 1
                 case 'datetime_s':
                     start_time = datetime.fromisoformat(value)
                     db_query = db_query.where(self._cols.datetime >= start_time)
+                    filtered = 1
                 case 'datetime_e':
                     end_time = datetime.fromisoformat(value)
                     db_query = db_query.where(self._cols.datetime <= end_time)
+                    filtered = 1
                 case 'date_s':
                     start_time = datetime.fromisoformat(value)
                     db_query = db_query.where(self._cols.datetime >= start_time)
+                    filtered = 1
                 case 'date_e':
                     # 轉成 datetime，再加一天
                     end_time = datetime.strptime(value, "%Y-%m-%d") + timedelta(days=1)
                     db_query = db_query.where(self._cols.datetime < end_time)
-        return db_query
+                    filtered = 1
+        return [db_query, filtered]
 
     def check_new_data(self, data):
         error_msgs = []

@@ -20,22 +20,26 @@ class DBBase(ABC):
     # 刪除
     @abstractmethod
     def delete_data(self, where={}):
+        # return {'deleted':result.rowcount, 'msg':''}
         pass
 
     # 編輯
     @abstractmethod
     def update_data(self, where, data={}):
+        # return {'saved':result.rowcount, 'msg':''}
         pass
 
     # 新增
     @abstractmethod
     def insert_data(self, data={}):
+        # return {'saved':pk_list, 'msg':''}
         pass
 
 
     # 處理篩選條件
     @abstractmethod
     def deal_where_query(self, db_query, where):
+        # return [db_query, filtered] # 回傳組織篩選條件的db_query、where參數是否有套用到篩選
         pass
 
     # 判斷新資料是否符合新增條件

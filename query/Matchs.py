@@ -20,9 +20,9 @@ class Matchs(DBBase):
     def get_data(self, where={}):
         where_user = where.copy()
         if "id" in where: del where_user['id']
+        if "user_id" in where: where_user['id'] = where_user['user_id']
         user_result = self._Users_ins.get_data(where_user)
         where['user_ids'] = [item['id'] for item in user_result['data']]
-        user_map = {item["id"]: item for item in user_result['data']}
 
         # 設定撈取欄位&表
         db_query = select(
@@ -39,7 +39,7 @@ class Matchs(DBBase):
                     ).select_from(self._table)
 
         # 設定篩選條件
-        db_query = self.deal_where_query(db_query, where)
+        [db_query, *_] = self.deal_where_query(db_query, where)
         # 設定排序
         db_query = db_query.order_by(self._cols.id)
 
@@ -49,23 +49,22 @@ class Matchs(DBBase):
         # 轉成 list of dict
         rows = [dict(row._mapping) for row in result]
 
-        return {"data": rows, "user_map": user_map}
+        return {"data": rows}
 
     # 刪除比賽紀錄
     def delete_data(self, where={}):
-        if where=={}: return 0
-
         # 設定刪除表
         db_query = delete(self._table)
 
         # 設定篩選條件
-        db_query = self.deal_where_query(db_query, where)
+        [db_query, filtered] = self.deal_where_query(db_query, where)
+        if filtered==0: return {'deleted':0, 'msg':'請設定篩選條件'}
 
         # 執行sql
         result = self._conn.execute(db_query)
         self._conn.commit()
 
-        return result.rowcount
+        return {'deleted':result.rowcount, 'msg':''}
 
     # 編輯比賽紀錄
     def update_data(self, where, data={}):
@@ -74,19 +73,19 @@ class Matchs(DBBase):
         if error_msg: msg += self.set_error_msg(data.get(self._main_col, ''), error_msg)
 
         # 檢查有誤
-        if msg:
-            return {'saved':0, 'msg':msg}
+        if msg: return {'saved':0, 'msg':msg}
         
         db_query = update(self._table)
         db_query = db_query.values(**data)
 
         # 設定篩選條件
-        db_query = self.deal_where_query(db_query, where)
+        [db_query, filtered] = self.deal_where_query(db_query, where)
+        if filtered==0: return {'saved':0, 'msg':'請設定篩選條件'}
 
         result = self._conn.execute(db_query)
         self._conn.commit()
 
-        return result.rowcount        
+        return {'saved':result.rowcount, 'msg':msg}
 
     # 新增比賽紀錄
     def insert_data(self, data={}):
@@ -103,8 +102,7 @@ class Matchs(DBBase):
             items.append(data)
         
         # 檢查有誤
-        if msg:
-            return {'saved':0, 'msg':msg}
+        if msg: return {'saved':0, 'msg':msg}
 
         db_query = insert(self._table)
         result = self._conn.execute(db_query, items)
@@ -120,24 +118,38 @@ class Matchs(DBBase):
 
 
     def deal_where_query(self, db_query, where):
+        filtered = 0
         for key, value in where.items():
             if value=='' or value is None:
                 continue
             match key:
                 case 'id':
                     db_query = db_query.where(self._cols.id == value)
+                    filtered = 1
                 case 'play_date_id':
                     db_query = db_query.where(self._cols.play_date_id == value)
+                    filtered = 1
                 case 'court_id':
                     db_query = db_query.where(self._cols.court_id == value)
+                    filtered = 1
                 case 'duration_s':
                     db_query = db_query.where(self._cols.duration >= value)
+                    filtered = 1
                 case 'duration_e':
                     db_query = db_query.where(self._cols.duration <= value)
+                    filtered = 1
                 case 'user_ids':
                     value.append(0)
-                    db_query = db_query.where(self._cols.duration.in_(value))
-        return db_query
+                    db_query = db_query.where(
+                        or_(
+                            self._cols.user_id_1.in_(value),
+                            self._cols.user_id_2.in_(value),
+                            self._cols.user_id_3.in_(value),
+                            self._cols.user_id_4.in_(value)
+                        )
+                    )
+                    filtered = 1
+        return [db_query, filtered]
 
     def check_new_data(self, data):
         error_msgs = []

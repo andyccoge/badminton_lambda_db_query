@@ -25,7 +25,7 @@ class Courts(DBBase):
                     ).select_from(self._table)
 
         # 設定篩選條件
-        db_query = self.deal_where_query(db_query, where)
+        [db_query, *_] = self.deal_where_query(db_query, where)
         # 設定排序
         db_query = db_query.order_by(self._cols.id)
 
@@ -46,19 +46,18 @@ class Courts(DBBase):
 
     # 刪除場地
     def delete_data(self, where={}):
-        if where=={}: return 0
-
         # 設定刪除表
         db_query = delete(self._table)
 
         # 設定篩選條件
-        db_query = self.deal_where_query(db_query, where)
+        [db_query, filtered] = self.deal_where_query(db_query, where)
+        if filtered==0: return {'deleted':0, 'msg':'請設定篩選條件'}
 
         # 執行sql
         result = self._conn.execute(db_query)
         self._conn.commit()
 
-        return result.rowcount
+        return {'deleted':result.rowcount, 'msg':''}
 
     # 編輯場地
     def update_data(self, where, data={}):
@@ -67,19 +66,19 @@ class Courts(DBBase):
         if error_msg: msg += self.set_error_msg(data.get(self._main_col, ''), error_msg)
 
         # 檢查有誤
-        if msg:
-            return {'saved':0, 'msg':msg}
+        if msg: return {'saved':0, 'msg':msg}
         
         db_query = update(self._table)
         db_query = db_query.values(**data)
 
         # 設定篩選條件
-        db_query = self.deal_where_query(db_query, where)
+        [db_query, filtered] = self.deal_where_query(db_query, where)
+        if filtered==0: return {'saved':0, 'msg':'請設定篩選條件'}
 
         result = self._conn.execute(db_query)
         self._conn.commit()
 
-        return result.rowcount        
+        return {'saved':result.rowcount, 'msg':msg}
 
     # 新增場地
     def insert_data(self, data={}):
@@ -113,19 +112,24 @@ class Courts(DBBase):
 
 
     def deal_where_query(self, db_query, where):
+        filtered = 0
         for key, value in where.items():
             if value=='' or value is None:
                 continue
             match key:
                 case 'id':
                     db_query = db_query.where(self._cols.id == value)
+                    filtered = 1
                 case 'play_date_id':
                     db_query = db_query.where(self._cols.play_date_id == value)
+                    filtered = 1
                 case 'code':
                     db_query = db_query.where(self._cols.code.like(f'%{value}%'))
+                    filtered = 1
                 case 'type':
                     db_query = db_query.where(self._cols.type == value)
-        return db_query
+                    filtered = 1
+        return [db_query, filtered]
 
     def check_new_data(self, data):
         error_msgs = []
