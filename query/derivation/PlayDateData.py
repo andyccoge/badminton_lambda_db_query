@@ -21,7 +21,11 @@ class PlayDateData():
         play_date = play_date[0]
 
         # 場地資料
-        courts = self._Courts_ins.get_data({'play_date_id':play_date['id']})["data"]
+        courts_r = self._Courts_ins.get_data({'play_date_id':play_date['id']})
+        courts = courts_r["data"]
+        courts_match = courts_r["courts_match"]
+        courts_prepare = courts_r["courts_prepare"]
+        court_type = courts_r["court_type"]
 
         # 報名紀錄
         reservations = self._Reservations_ins.get_data({'play_date_id':play_date['id']})["data"]
@@ -41,8 +45,11 @@ class PlayDateData():
 
         return {
             'msg':'', 
-            'play_date':play_date, 
+            'play_date':play_date,
             'courts':courts,
+            'courts_match':courts_match,
+            'courts_prepare':courts_prepare,
+            'court_type':court_type,
             'reservations':reservations,
             'matchs':matchs,
             'user_map':user_map,
