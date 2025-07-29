@@ -4,8 +4,6 @@
         "Content-Type": "application/json"
     },
     "body": {
-        "//":"###body資料在test.py中會轉成json文字後傳送，模擬真實發送的body內容",
-
         "//":"### 撈取資料對象，根據不同值Lambda會呼叫不同的篩選函式",
         "target":"play_date_data",
 
@@ -13,9 +11,11 @@
         "where":{
             "id":1
         },
+    
         "//":"###'常規傳遞資料都寫於此",
         "data":{
         },
+    
         "data_batch_insert_play_date":[
             {
                 "datetime":"2025-07-29 20:00",
@@ -68,7 +68,6 @@
                 "level": 9
             }
         ],
-
         "//":""
     }
 }

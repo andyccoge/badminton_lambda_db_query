@@ -6,7 +6,6 @@ from lambda_function import lambda_handler
 # 模擬 event/context
 with open('test_event.json', 'r', encoding='utf-8') as f:
     event = json.load(f)
-event['body'] = json.dumps(event['body'], ensure_ascii=False)
 
 context = {}  # 可留空或放一些 mock context
 
