@@ -38,7 +38,8 @@ def lambda_handler(event, context):
     # 解析請求內容
     method = event.get('httpMethod', '')    # 請求方式
     method = method.upper()
-    body = event.get('body', {})
+    raw_body = event.get('body', '{}')
+    body = json.loads(raw_body)
     target = body.get('target', '')         # 資料對象
     where = body.get('where', {})           # 篩選條件
     data = body.get('data', {})             # 傳輸資料
@@ -121,8 +122,10 @@ def lambda_handler(event, context):
             case _:
                 return {"statusCode": 403, "body": f"Wrong data target: {target}"}
 
+        conn.close()
+        engine.dispose()
         # 回傳 JSON 字串（用於 API 回傳）
-        return {"statusCode": 200, "body": result}
+        return {"statusCode": 200, "body": json.dumps(result, ensure_ascii=False)}
     except Exception as e:
         # raise
         return {"statusCode": 500, "body": f"DB operation error: {str(e)}"}
