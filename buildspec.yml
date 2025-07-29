@@ -8,7 +8,7 @@ phases:
       - pip install -r requirements.txt -t .
   build:
     commands:
-      - zip -r lambda-package.zip .
+      - echo "build done"
 artifacts:
   files:
-    - lambda-package.zip
+    - '**/*'
