@@ -35,9 +35,14 @@ def lambda_handler(event, context):
     except Exception as e:
         return {"statusCode": 500, "body": f"Database connection error: {str(e)}"}
 
+    # 解析請求方式
+    method = (
+        event.get('httpMethod') or
+        event.get('requestContext', {}).get('http', {}).get('method') or
+        ''
+    ).upper()
+
     # 解析請求內容
-    method = event.get('httpMethod', '')    # 請求方式
-    method = method.upper()
     raw_body = event.get('body', '{}')
     body = json.loads(raw_body)
     target = body.get('target', '')         # 資料對象
