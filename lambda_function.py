@@ -124,5 +124,5 @@ def lambda_handler(event, context):
         # 回傳 JSON 字串（用於 API 回傳）
         return {"statusCode": 200, "body": result}
     except Exception as e:
-        raise
+        # raise
         return {"statusCode": 500, "body": f"DB operation error: {str(e)}"}
