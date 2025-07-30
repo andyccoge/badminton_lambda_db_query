@@ -98,7 +98,7 @@ class Users(DBBase):
         self._conn.commit()
         
         # 再查詢最後 N 筆資料(可考慮 result.rowcount)
-        stmt = select(self._table).order_by(self._cols.id.desc()).limit(len(data))
+        stmt = select(self._table).order_by(self._cols.id.desc()).limit(len(items))
         rows = self._conn.execute(stmt).fetchall()
 
         # 取得主鍵 id 清單（記得反轉順序）
