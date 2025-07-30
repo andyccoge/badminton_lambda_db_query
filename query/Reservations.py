@@ -126,6 +126,9 @@ class Reservations(DBBase):
                 case 'id':
                     db_query = db_query.where(self._cols.id == value)
                     filtered = 1
+                case 'ids':
+                    db_query = db_query.where(self._cols.id.in_(value))
+                    filtered = 1
                 case 'user_id':
                     db_query = db_query.where(self._cols.user_id == value)
                     filtered = 1

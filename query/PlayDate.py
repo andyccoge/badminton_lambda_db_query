@@ -114,6 +114,9 @@ class PlayDate(DBBase):
                 case 'id':
                     db_query = db_query.where(self._cols.id == value)
                     filtered = 1
+                case 'ids':
+                    db_query = db_query.where(self._cols.id.in_(value))
+                    filtered = 1
                 case 'location':
                     db_query = db_query.where(self._cols.location.like(f'%{value}%'))
                     filtered = 1

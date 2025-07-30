@@ -120,6 +120,9 @@ class Courts(DBBase):
                 case 'id':
                     db_query = db_query.where(self._cols.id == value)
                     filtered = 1
+                case 'ids':
+                    db_query = db_query.where(self._cols.id.in_(value))
+                    filtered = 1
                 case 'play_date_id':
                     db_query = db_query.where(self._cols.play_date_id == value)
                     filtered = 1
