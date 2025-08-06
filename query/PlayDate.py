@@ -81,16 +81,20 @@ class PlayDate(DBBase):
         if type(data) is list: # 批次新增
             for item in data:
                 [error_msg, item] = self.check_new_data(item)
-                if error_msg: msg += self.set_error_msg(item.get(self._main_col, ''), error_msg)
-                item['datetime'] = datetime.strptime(item.get('datetime', ''), "%Y-%m-%d %H:%M")
-                item['datetime2'] = datetime.strptime(item.get('datetime2', ''), "%Y-%m-%d %H:%M")
-                items.append(item)
+                if error_msg: 
+                    msg += self.set_error_msg(item.get(self._main_col, ''), error_msg)
+                else:
+                    item['datetime'] = datetime.strptime(item.get('datetime', ''), "%Y-%m-%d %H:%M")
+                    item['datetime2'] = datetime.strptime(item.get('datetime2', ''), "%Y-%m-%d %H:%M")
+                    items.append(item)
         else: # 單個新增
             [error_msg, data] = self.check_new_data(data)
-            if error_msg: msg += self.set_error_msg(data.get(self._main_col, ''), error_msg)
-            data['datetime'] = datetime.strptime(data.get('datetime', ''), "%Y-%m-%d %H:%M")
-            data['datetime2'] = datetime.strptime(data.get('datetime2', ''), "%Y-%m-%d %H:%M")
-            items.append(data)
+            if error_msg: 
+                msg += self.set_error_msg(data.get(self._main_col, ''), error_msg)
+            else:
+                data['datetime'] = datetime.strptime(data.get('datetime', ''), "%Y-%m-%d %H:%M")
+                data['datetime2'] = datetime.strptime(data.get('datetime2', ''), "%Y-%m-%d %H:%M")
+                items.append(data)
         
         # 檢查有誤
         if msg: return {'saved':0, 'msg':msg}
