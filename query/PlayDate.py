@@ -21,7 +21,8 @@ class PlayDate(DBBase):
                         self._cols.id,
                         self._cols.location,
                         self._cols.note,
-                        func.date_format(self._cols.datetime, "%Y-%m-%d %H:%i").label("datetime")
+                        func.date_format(self._cols.datetime, "%Y-%m-%d %H:%i").label("datetime"),
+                        func.date_format(self._cols.datetime2, "%Y-%m-%d %H:%i").label("datetime2")
                     ).select_from(self._table)
 
         # 設定篩選條件
@@ -82,11 +83,13 @@ class PlayDate(DBBase):
                 [error_msg, item] = self.check_new_data(item)
                 if error_msg: msg += self.set_error_msg(item.get(self._main_col, ''), error_msg)
                 item['datetime'] = datetime.strptime(item.get('datetime', ''), "%Y-%m-%d %H:%M")
+                item['datetime2'] = datetime.strptime(item.get('datetime2', ''), "%Y-%m-%d %H:%M")
                 items.append(item)
         else: # 單個新增
             [error_msg, data] = self.check_new_data(data)
             if error_msg: msg += self.set_error_msg(data.get(self._main_col, ''), error_msg)
             data['datetime'] = datetime.strptime(data.get('datetime', ''), "%Y-%m-%d %H:%M")
+            data['datetime2'] = datetime.strptime(data.get('datetime2', ''), "%Y-%m-%d %H:%M")
             items.append(data)
         
         # 檢查有誤
@@ -145,9 +148,9 @@ class PlayDate(DBBase):
     def check_new_data(self, data):
         error_msgs = []
         # 新增檢查
-        if 'datetime' not in data: 
-            error_msgs.append('請設定日期時間')
-        
+        if 'datetime' not in data: error_msgs.append('請設定開始日期時間')
+        if 'datetime2' not in data: error_msgs.append('請設定結束日期時間')
+
         # 一般檢查
         [error_msg2, data] = self.check_data(data)
         if error_msg2: error_msgs.append(error_msg2)
@@ -160,6 +163,8 @@ class PlayDate(DBBase):
         if 'updated_at' in data: del data['updated_at']
 
         if 'datetime' in data and not data['datetime']:
-            error_msgs.append('請設定日期時間')
+            error_msgs.append('請設定開始日期時間')
+        if 'datetime2' in data and not data['datetime2']:
+            error_msgs.append('請設定結束日期時間')
 
         return ['、'.join(error_msgs), data]
