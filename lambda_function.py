@@ -1,12 +1,18 @@
 import json
 import boto3
 import os
-# import requests
+from urllib.parse import unquote
 from sqlalchemy import create_engine
 from query import Users, PlayDate, Courts, Reservations, Matchs
 from query.derivation import PlayDateData
 
 db_name = 'badminton_db_1'
+headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "*",
+    "Access-Control-Allow-Methods": "*",
+    "Content-Type": "application/json",
+}
 
 def get_secret(secret_name, region_name="ap-northeast-1"):
     client = boto3.client('secretsmanager', region_name=region_name)
@@ -27,27 +33,47 @@ def get_db_connect():
     conn = engine.connect()
     return [engine, conn]
 
+def parse_nested_query(query):
+    parsed = {}
+    for key, value in query.items():
+        if '[' in key and ']' in key:
+            # 解析 like: where[id] => {'where': {'id': value}}
+            outer, inner = key.split('[', 1)
+            inner = inner.rstrip(']')
+            if outer not in parsed:
+                parsed[outer] = {}
+            parsed[outer][inner] = value
+        else:
+            parsed[key] = value
+    return parsed
 
 def lambda_handler(event, context):
     # 建立連線
     try:
         [engine, conn] = get_db_connect()
     except Exception as e:
-        return {"statusCode": 500, "body": f"Database connection error: {str(e)}"}
+        return {"headers":headers, "statusCode": 500, "body": f"Database connection error: {str(e)}"}
 
     # 解析請求方式
-    method = (
-        event.get('httpMethod') or
-        event.get('requestContext', {}).get('http', {}).get('method') or
-        ''
-    ).upper()
+    method = event.get('httpMethod').upper()
 
     # 解析請求內容
-    raw_body = event.get('body', '{}')
-    body = json.loads(raw_body)
-    target = body.get('target', '')         # 資料對象
-    where = body.get('where', {})           # 篩選條件
-    data = body.get('data', {})             # 傳輸資料
+    raw_body = event.get('body')
+    if raw_body:
+        try:
+            body = json.loads(raw_body)
+        except Exception:
+            body = {}
+        target = body.get('target', '')     # 資料對象
+        where = body.get('where', {})       # 篩選條件
+        data = body.get('data', {})         # 傳輸資料        
+    else:
+        # GET 請求的參數在 query string
+        query = event.get("queryStringParameters") or {}
+        parsed_query = parse_nested_query(query)
+        target = parsed_query.get('target', '')    # 資料對象
+        where = parsed_query.get('where', {})      # 篩選條件
+        data = parsed_query.get('data', {})        # 傳輸資料
 
     # 撈取資料
     try:
@@ -63,7 +89,7 @@ def lambda_handler(event, context):
                 elif method=='PUT': # 編輯球員
                     result = Users_ins.update_data(where, data)
                 else:
-                    return {"statusCode": 403, "body": f"No this action:{method}"}
+                    return {"headers":headers, "statusCode": 403, "body": f"No this action:{method}"}
             
             case 'play_date':
                 PlayDate_ins = PlayDate.PlayDate(engine, conn)
@@ -76,7 +102,7 @@ def lambda_handler(event, context):
                 elif method=='PUT': # 編輯打球日
                     result = PlayDate_ins.update_data(where, data)
                 else:
-                    return {"statusCode": 403, "body": f"No this action:{method}"}
+                    return {"headers":headers, "statusCode": 403, "body": f"No this action:{method}"}
             
             case 'courts':
                 Courts_ins = Courts.Courts(engine, conn)
@@ -89,7 +115,7 @@ def lambda_handler(event, context):
                 elif method=='PUT': # 編輯場地
                     result = Courts_ins.update_data(where, data)
                 else:
-                    return {"statusCode": 403, "body": f"No this action:{method}"}
+                    return {"headers":headers, "statusCode": 403, "body": f"No this action:{method}"}
 
             case 'reservations':
                 Reservations_ins = Reservations.Reservations(engine, conn)
@@ -102,7 +128,7 @@ def lambda_handler(event, context):
                 elif method=='PUT': # 編輯報名紀錄
                     result = Reservations_ins.update_data(where, data)
                 else:
-                    return {"statusCode": 403, "body": f"No this action:{method}"}
+                    return {"headers":headers, "statusCode": 403, "body": f"No this action:{method}"}
 
             case 'matchs':
                 Matchs_ins = Matchs.Matchs(engine, conn)
@@ -115,22 +141,22 @@ def lambda_handler(event, context):
                 elif method=='PUT': # 編輯比賽紀錄
                     result = Matchs_ins.update_data(where, data)
                 else:
-                    return {"statusCode": 403, "body": f"No this action:{method}"}
+                    return {"headers":headers, "statusCode": 403, "body": f"No this action:{method}"}
 
             case 'play_date_data':
                 PlayDateData_ins = PlayDateData.PlayDateData(engine, conn)
                 if method=='GET': # 取得打球日所需的所有資料(含場地、報名紀錄、比賽紀錄、相關人員)
                     result = PlayDateData_ins.get_data(where)
                 else:
-                    return {"statusCode": 403, "body": f"No this action:{method}"}
+                    return {"headers":headers, "statusCode": 403, "body": f"No this action:{method}"}
 
             case _:
-                return {"statusCode": 403, "body": f"Wrong data target: {target}"}
+                return {"headers":headers, "statusCode": 403, "body": f"Wrong data target: {target}"}
 
         conn.close()
         engine.dispose()
         # 回傳 JSON 字串（用於 API 回傳）
-        return {"statusCode": 200, "body": json.dumps(result, ensure_ascii=False)}
+        return {"headers":headers, "statusCode": 200, "body": json.dumps(result, ensure_ascii=False)}
     except Exception as e:
         # raise
-        return {"statusCode": 500, "body": f"DB operation error: {str(e)}"}
+        return {"headers":headers, "statusCode": 500, "body": f"DB operation error: {str(e)}"}
