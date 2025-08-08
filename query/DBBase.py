@@ -54,4 +54,4 @@ class DBBase(ABC):
 
     # 依參數組織回傳的錯誤訊息(主要辨別文字[ex:名稱]+錯誤說明)
     def set_error_msg(self, main_str ,error_msg):
-        return ((main_str+'：') if main_str else '') + error_msg + "; "
+        return ((main_str+'：') if main_str.strip() else '') + error_msg + "; "
