@@ -166,9 +166,9 @@ class PlayDate(DBBase):
         if 'created_at' in data: del data['created_at']
         if 'updated_at' in data: del data['updated_at']
 
-        if 'datetime' in data and not data['datetime']:
+        if 'datetime' in data and not data['datetime'].strip():
             error_msgs.append('請設定開始日期時間')
-        if 'datetime2' in data and not data['datetime2']:
+        if 'datetime2' in data and not data['datetime2'].strip():
             error_msgs.append('請設定結束日期時間')
 
         return ['、'.join(error_msgs), data]

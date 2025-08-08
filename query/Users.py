@@ -158,7 +158,7 @@ class Users(DBBase):
         if 'created_at' in data: del data['created_at']
         if 'updated_at' in data: del data['updated_at']
 
-        if 'name' in data and not data['name']:
+        if 'name' in data and not data['name'].strip():
             error_msgs.append('請設定姓名')
         if 'email' in data and data['email'] and not self.is_valid_email(data['email']):
             error_msgs.append('信箱格式有誤')
