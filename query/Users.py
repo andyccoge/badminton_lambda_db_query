@@ -117,10 +117,10 @@ class Users(DBBase):
                     db_query = db_query.where(self._cols.id == value)
                     filtered = 1
                 case 'ids':
-                    try:
-                        if isinstance(value, str): value = json.loads(value)
-                    except Exception as e:
-                        value = [-1]
+                    # try:
+                    if isinstance(value, str): value = json.loads(value)
+                    # except Exception as e:
+                        # value = [-1]
                     if value:
                         db_query = db_query.where(self._cols.id.in_(value))
                         filtered = 1
