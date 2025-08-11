@@ -1,3 +1,4 @@
+import json
 from query.DBBase import DBBase
 from sqlalchemy import Table, MetaData, select, or_, delete, update, insert
 import re
@@ -109,13 +110,17 @@ class Users(DBBase):
     def deal_where_query(self, db_query, where):
         filtered = 0
         for key, value in where.items():
-            if value=='' or value is None:
+            if value=='' or value=='[]' or value is None:
                 continue
             match key:
                 case 'id':
                     db_query = db_query.where(self._cols.id == value)
                     filtered = 1
                 case 'ids':
+                    try:
+                        if isinstance(value, str): value = json.loads(value)
+                    except Exception as e:
+                        value = [-1]
                     db_query = db_query.where(self._cols.id.in_(value))
                     filtered = 1
                 case 'email':
