@@ -121,7 +121,7 @@ class Matchs(DBBase):
     def deal_where_query(self, db_query, where):
         filtered = 0
         for key, value in where.items():
-            if value=='' or value is None:
+            if value=='' or value=='[]' or value=='null' or value is None:
                 continue
             match key:
                 case 'id':
@@ -132,9 +132,8 @@ class Matchs(DBBase):
                         if isinstance(value, str): value = json.loads(value)
                     except Exception as e:
                         value = [-1]
-                    if value:
-                        db_query = db_query.where(self._cols.id.in_(value))
-                        filtered = 1
+                    db_query = db_query.where(self._cols.id.in_(value))
+                    filtered = 1
                 case 'play_date_id':
                     db_query = db_query.where(self._cols.play_date_id == value)
                     filtered = 1
@@ -152,17 +151,16 @@ class Matchs(DBBase):
                         if isinstance(value, str): value = json.loads(value)
                     except Exception as e:
                         value = [-1]
-                    if value:
-                        value.append(0)
-                        db_query = db_query.where(
-                            or_(
-                                self._cols.user_id_1.in_(value),
-                                self._cols.user_id_2.in_(value),
-                                self._cols.user_id_3.in_(value),
-                                self._cols.user_id_4.in_(value)
-                            )
+                    value.append(0)
+                    db_query = db_query.where(
+                        or_(
+                            self._cols.user_id_1.in_(value),
+                            self._cols.user_id_2.in_(value),
+                            self._cols.user_id_3.in_(value),
+                            self._cols.user_id_4.in_(value)
                         )
-                        filtered = 1
+                    )
+                    filtered = 1
         return [db_query, filtered]
 
     def check_new_data(self, data):
