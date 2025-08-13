@@ -20,8 +20,10 @@ class Matchs(DBBase):
     # 取得比賽紀錄
     def get_data(self, where={}):
         where_user = where.copy()
-        if "id" in where: del where_user['id']
-        if "user_id" in where: where_user['id'] = where_user['user_id']
+        if "id" in where: del where_user['id']      # 避免查比賽紀錄的id影響到查詢球員
+        if "ids" in where: del where_user['ids']    # 避免查比賽紀錄的id影響到查詢球員
+        if "user_id" in where: where_user['id'] = where['user_id']
+        if "user_ids" in where: where_user['ids'] = where['user_ids']
         user_result = self._Users_ins.get_data(where_user)
         where['user_ids'] = [item['id'] for item in user_result['data']]
 
@@ -159,7 +161,7 @@ class Matchs(DBBase):
                             self._cols.user_id_3.in_(value),
                             self._cols.user_id_4.in_(value)
                         )
-                    ).self._cols.user_id_1.in_(value)
+                    )
                     filtered = 1
         return [db_query, filtered]
 
