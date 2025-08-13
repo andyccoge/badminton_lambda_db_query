@@ -158,8 +158,8 @@ class Matchs(DBBase):
                             self._cols.user_id_2.in_(value),
                             self._cols.user_id_3.in_(value),
                             self._cols.user_id_4.in_(value)
-                        ).where(self._cols.id == 6)
-                    )
+                        )
+                    ).self._cols.user_id_1.in_(value)
                     filtered = 1
         return [db_query, filtered]
 
