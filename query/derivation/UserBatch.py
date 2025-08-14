@@ -24,7 +24,7 @@ class UserBatch():
             repeat_line.append(name)
             continue
         ok_names.append(name)
-        add_names.append({'name':name,'name_line':name,'name_nick':name,})
+        add_names.append({'name':name,'name_line':name,'name_nick':name,'gender':1,})
 
       if len(repeat_name)==0 and len(repeat_line)==0:
         if len(add_names)>0 :
