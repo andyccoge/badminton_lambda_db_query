@@ -171,6 +171,15 @@ class Reservations(DBBase):
                 case 'level_over':
                     db_query = db_query.where(self._users.c.level >= value)
                     filtered = 1
+                case 'name-ab':
+                    db_query = db_query.where(self._users.c.name == value)
+                    filtered = 1
+                case 'name_nick-ab':
+                    db_query = db_query.where(self._users.c.name_nick == value)
+                    filtered = 1
+                case 'name_line-ab':
+                    db_query = db_query.where(self._users.c.name_line == value)
+                    filtered = 1
         return [db_query, filtered]
 
     def check_new_data(self, data):

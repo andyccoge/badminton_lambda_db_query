@@ -155,6 +155,8 @@ def lambda_handler(event, context):
                 UserBatch_ins = UserBatch.UserBatch(engine, conn)
                 if method=='POST': # 批次新增球員(先檢查重複名單)
                     result = UserBatch_ins.batch_add_users(data)
+                elif method=='PUT': # 批次設定比賽紀錄(全新球員自動建立、模糊球員需進一步選擇)
+                    result = UserBatch_ins.batch_set_reservations(data)
                 else:
                     return {"headers":headers, "statusCode": 403, "body": f"No this action:{method}"}
 

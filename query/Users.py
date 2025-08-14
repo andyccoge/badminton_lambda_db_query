@@ -6,6 +6,7 @@ import re
 class Users(DBBase):
     _table_name = 'users'
     _main_col = 'name'
+    _genter_text = ["", "男", "女"]
 
     def __init__(self, engine, conn):
         self._engine = engine
