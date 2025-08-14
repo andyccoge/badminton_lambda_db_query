@@ -177,7 +177,7 @@ class Users(DBBase):
             error_msgs.append('手機號碼只可輸入數字')
         if 'gender' in data and data['gender'] not in [1,2]:
             error_msgs.append('性別設定有誤')
-        if 'level' in data and int(data['level']) < 0:
+        if 'level' in data and  data['level'] and int(data['level']) < 0:
             error_msgs.append('等級設定有誤')
 
         return ['、'.join(error_msgs), data]
