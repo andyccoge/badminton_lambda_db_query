@@ -204,11 +204,11 @@ class Matchs(DBBase):
             error_msgs.append('請設定對應打球日')
         if 'court_id' in data and not data['court_id']:
             error_msgs.append('請設定對應場地')
-        if 'point_12' in data and data['point_12'] < 0:
+        if 'point_12' in data and int(data['point_12']) < 0:
             error_msgs.append('分數設定有誤')
-        if 'point_34' in data and data['point_34'] < 0:
+        if 'point_34' in data and int(data['point_34']) < 0:
             error_msgs.append('分數設定有誤')
-        if 'duration' in data and data['duration'] < 0:
+        if 'duration' in data and int(data['duration']) < 0:
             error_msgs.append('比賽時間設定有誤')
 
         return ['、'.join(error_msgs), data]
