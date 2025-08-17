@@ -52,7 +52,17 @@ class Matchs(DBBase):
         # 轉成 list of dict
         rows = [dict(row._mapping) for row in result]
 
-        return {"data": rows}
+        # 依比賽紀錄取得對應顯示的會員map(id=>資料)
+        user_ids = [0]
+        for item in rows:
+            user_ids.append(item['user_id_1'])
+            user_ids.append(item['user_id_2'])
+            user_ids.append(item['user_id_3'])
+            user_ids.append(item['user_id_4'])
+        users = self._Users_ins.get_data({'ids':user_ids})["data"]
+        user_map = {item['id']:item for item in users }
+
+        return {"data": rows, "user_map":user_map, }
 
     # 刪除比賽紀錄
     def delete_data(self, where={}):

@@ -31,17 +31,9 @@ class PlayDateData():
         reservations = self._Reservations_ins.get_data({'play_date_id':play_date['id']})["data"]
 
         # 比賽紀錄
-        matchs = self._Matchs_ins.get_data({'play_date_id':play_date['id']})["data"]
-
-        # 報名紀錄&比賽紀錄相關人員(以id為key)
-        user_ids = [item['user_id'] for item in reservations]
-        for item in matchs:
-            user_ids.append(item['user_id_1'])
-            user_ids.append(item['user_id_2'])
-            user_ids.append(item['user_id_3'])
-            user_ids.append(item['user_id_4'])
-        users = self._Users_ins.get_data({'ids':user_ids})["data"]
-        user_map = {item['id']:item for item in users }
+        matchs_result = self._Matchs_ins.get_data({'play_date_id':play_date['id']})
+        matchs = matchs_result["data"]
+        user_map = matchs_result["user_map"]
 
         return {
             'msg':'', 
