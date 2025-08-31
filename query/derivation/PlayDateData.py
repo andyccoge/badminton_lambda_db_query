@@ -29,11 +29,23 @@ class PlayDateData():
 
         # 報名紀錄
         reservations = self._Reservations_ins.get_data({'play_date_id':play_date['id']})["data"]
+        all_user_map = {reservation['user_id']:{
+            'id':reservation['user_id'],
+            'name':reservation['name'],
+            'name_line':reservation['name_line'],
+            'name_nick':reservation['name_nick'],
+            'level':reservation['level'],
+            'gender':reservation['gender'],
+            'email':reservation['email'],
+            'cellphone':reservation['cellphone'],
+        } for reservation in reservations }
 
         # 比賽紀錄
         matchs_result = self._Matchs_ins.get_data({'play_date_id':play_date['id']})
         matchs = matchs_result["data"]
         user_map = matchs_result["user_map"]
+
+        all_user_map.update(user_map)
 
         return {
             'msg':'', 
@@ -44,5 +56,5 @@ class PlayDateData():
             'court_type':court_type,
             'reservations':reservations,
             'matchs':matchs,
-            'user_map':user_map,
+            'user_map':all_user_map,
         }
