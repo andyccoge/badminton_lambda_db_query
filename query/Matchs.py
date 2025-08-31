@@ -178,14 +178,12 @@ class Matchs(DBBase):
     def check_new_data(self, data):
         error_msgs = []
         # 新增檢查
-        if 'user_id_1' not in data: 
-            error_msgs.append('請設定對應球員')
-        if 'user_id_2' not in data: 
-            error_msgs.append('請設定對應球員')
-        if 'user_id_3' not in data: 
-            error_msgs.append('請設定對應球員')
-        if 'user_id_4' not in data: 
-            error_msgs.append('請設定對應球員')
+        if (
+            'user_id_1' not in data and 
+            'user_id_2' not in data and 
+            'user_id_3' not in data and 
+            'user_id_4' not in data
+        ): error_msgs.append('請設定對應球員')
         if 'play_date_id' not in data: 
             error_msgs.append('請設定對應打球日')
         if 'court_id' not in data: 
@@ -202,14 +200,6 @@ class Matchs(DBBase):
         if 'created_at' in data: del data['created_at']
         if 'updated_at' in data: del data['updated_at']
 
-        if 'user_id_1' in data and not data['user_id_1']:
-            error_msgs.append('請設定對應球員')
-        if 'user_id_2' in data and not data['user_id_2']:
-            error_msgs.append('請設定對應球員')
-        if 'user_id_3' in data and not data['user_id_3']:
-            error_msgs.append('請設定對應球員')
-        if 'user_id_4' in data and not data['user_id_4']:
-            error_msgs.append('請設定對應球員')
         if 'play_date_id' in data and not data['play_date_id']:
             error_msgs.append('請設定對應打球日')
         if 'court_id' in data and not data['court_id']:
