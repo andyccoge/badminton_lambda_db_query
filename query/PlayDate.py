@@ -1,5 +1,6 @@
 import json
 from query.DBBase import DBBase
+import query.Common as Common
 from sqlalchemy import Table, MetaData, select, or_, delete, update, insert, desc, func
 from datetime import datetime, timedelta
 
@@ -85,16 +86,16 @@ class PlayDate(DBBase):
                 if error_msg: 
                     msg += self.set_error_msg(item.get(self._main_col, ''), error_msg)
                 else:
-                    item['datetime'] = datetime.strptime(item.get('datetime', ''), "%Y-%m-%d %H:%M")
-                    item['datetime2'] = datetime.strptime(item.get('datetime2', ''), "%Y-%m-%d %H:%M")
+                    item['datetime'] = Common.datetimeToStamp(item.get('datetime', ''))
+                    item['datetime2'] = Common.datetimeToStamp(item.get('datetime2', ''))
                     items.append(item)
         else: # 單個新增
             [error_msg, data] = self.check_new_data(data)
             if error_msg: 
                 msg += self.set_error_msg(data.get(self._main_col, ''), error_msg)
             else:
-                data['datetime'] = datetime.strptime(data.get('datetime', ''), "%Y-%m-%d %H:%M")
-                data['datetime2'] = datetime.strptime(data.get('datetime2', ''), "%Y-%m-%d %H:%M")
+                data['datetime'] = Common.datetimeToStamp(item.get('datetime', ''))
+                data['datetime2'] = Common.datetimeToStamp(item.get('datetime2', ''))
                 items.append(data)
         
         # 檢查有誤
