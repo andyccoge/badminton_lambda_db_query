@@ -1,6 +1,7 @@
 from datetime import datetime
 
 def datetimeToStamp(dt_str):
+  parsed = None
   for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d"):
     try:
         parsed = datetime.strptime(dt_str, fmt)
