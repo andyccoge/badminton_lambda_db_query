@@ -4,12 +4,12 @@ def datetimeToStamp(dt_str):
   parsed = None
   for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d"):
     try:
-        parsed = datetime.strptime(dt_str, fmt)
-        break
+      parsed = datetime.strptime(dt_str, fmt)
+      break
     except ValueError:
-        continue
+      continue
 
   if parsed is None:
-      raise ValueError(f"無效時間格式")
+    raise ValueError(f"無效時間格式")
 
   return parsed
