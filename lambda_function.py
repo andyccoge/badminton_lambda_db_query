@@ -5,6 +5,7 @@ from urllib.parse import unquote
 from sqlalchemy import create_engine
 from query import Users, PlayDate, Courts, Reservations, Matchs
 from query.derivation import PlayDateData
+from query.derivation import PlayDatesData
 from query.derivation import UserBatch
 
 db_name = 'badminton_db_1'
@@ -148,6 +149,12 @@ def lambda_handler(event, context):
                 PlayDateData_ins = PlayDateData.PlayDateData(engine, conn)
                 if method=='GET': # 取得打球日所需的所有資料(含場地、報名紀錄、比賽紀錄、相關人員)
                     result = PlayDateData_ins.get_data(where)
+                else:
+                    return {"headers":headers, "statusCode": 403, "body": f"No this action:{method}"}
+            case 'play_dates_data':
+                PlayDatesData_ins = PlayDatesData.PlayDatesData(engine, conn)
+                if method=='GET': # 取得打球日所需的所有資料(含場地、報名紀錄、比賽紀錄、相關人員)
+                    result = PlayDatesData_ins.get_data(where)
                 else:
                     return {"headers":headers, "statusCode": 403, "body": f"No this action:{method}"}
 
