@@ -94,8 +94,8 @@ class PlayDate(DBBase):
             if error_msg: 
                 msg += self.set_error_msg(data.get(self._main_col, ''), error_msg)
             else:
-                data['datetime'] = Common.datetimeToStamp(item.get('datetime', ''))
-                data['datetime2'] = Common.datetimeToStamp(item.get('datetime2', ''))
+                data['datetime'] = Common.datetimeToStamp(data.get('datetime', ''))
+                data['datetime2'] = Common.datetimeToStamp(data.get('datetime2', ''))
                 items.append(data)
         
         # 檢查有誤
