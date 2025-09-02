@@ -1,11 +1,10 @@
-import json
-from query import PlayDate
-from sqlalchemy import Table, MetaData, select, distinct, func
+from query.PlayDate import PlayDate
+from sqlalchemy import Table, MetaData, select, distinct, desc, func
 
 class PlayDatesData(PlayDate):
   def __init__(self, engine, conn):
-    super.__init__(engine, conn)
-    
+    super().__init__(engine, conn)
+
     metadata = MetaData()
     self._courts = Table('courts', metadata, autoload_with=self._engine)
     self._reservations = Table('reservations', metadata, autoload_with=self._engine)
@@ -36,7 +35,7 @@ class PlayDatesData(PlayDate):
     # 設定篩選條件
     [db_query, *_] = self.deal_where_query(db_query, where)
     # 設定排序
-    db_query = db_query.order_by(self._cols.id)
+    db_query = db_query.order_by(desc(self._cols.datetime))
 
     # 執行sql
     result = self._conn.execute(db_query)
